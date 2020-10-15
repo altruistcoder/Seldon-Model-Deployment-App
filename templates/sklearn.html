@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <p class="home-button">
+        <a href="/" class="model-Library-type"> Home </a>
+    </p>
+    <h1> Seldon Model Deployment </h1>
+    <h5> Deploy your Sklearn Model </h5>
+    <br><br><br>
+    <form method="POST" action="/sklearn" enctype="multipart/form-data">
+        <p>
+            <input type="text" id="email" name="email" class="input-box" placeholder="Enter your Email">
+        </p>
+        <p>
+            <input type="text" id="namespace" name="namespace" class="input-box" placeholder="Enter your Namespace" required>
+        </p>
+        <p>
+            <input type="text" id="aws_access_key_id" name="aws_access_key_id" class="input-box" placeholder="Enter your AWS Access Key Id" required>
+        </p>
+        <p>
+            <input type="text" id="aws_secret_access_key" name="aws_secret_access_key" class="input-box" placeholder="Enter your AWS Secret Access Key" required>
+        </p>
+        <p>
+            <input type="text" id="s3_bucket_name" name="s3_bucket_name" class="input-box" placeholder="Enter your S3 bucket Name" required>
+        </p>
+        <p>
+            <input type="text" id="model_name" name="model_name" class="input-box" placeholder="Enter the Name of the Model" required>
+        </p>
+        <p>
+            <input type="text" id="s3_model_path" name="s3_model_path" class="input-box" placeholder="Enter your S3 Path of Model" required>
+        </p>
+        <p>
+            <input type="text" id="prediction_method" name="prediction_method" class="input-box" placeholder="Enter required Prediction Method" required>
+        </p>
+        <input class="btn btn-primary" type="submit" value='Submit &raquo;'>
+    </form>
+{% endblock content %}

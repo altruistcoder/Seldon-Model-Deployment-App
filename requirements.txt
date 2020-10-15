@@ -1,0 +1,6 @@
+flask
+boto3
+requests
+subprocess.run
+kubernetes
+openshift
