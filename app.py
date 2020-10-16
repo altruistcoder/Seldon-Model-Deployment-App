@@ -11,6 +11,10 @@ from openshift.dynamic import DynamicClient, exceptions
 app = Flask(__name__)
 
 
+k8s_client = config.new_client_from_config()
+dyn_client = DynamicClient(k8s_client)
+
+
 def checkNamespace(namespace_name):
     v1_projects = dyn_client.resources.get(api_version='project.openshift.io/v1', kind='Project')
     projects_list = v1_projects.get()
@@ -18,10 +22,6 @@ def checkNamespace(namespace_name):
         if namespace_name == project.metadata.name:
             return True
     return False
-
-
-k8s_client = config.new_client_from_config()
-dyn_client = DynamicClient(k8s_client)
 
 
 def checkSeldonInstance(seldon_operator_instance_name, namespace):
