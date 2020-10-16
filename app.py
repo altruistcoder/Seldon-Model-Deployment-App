@@ -11,6 +11,15 @@ from openshift.dynamic import DynamicClient, exceptions
 app = Flask(__name__)
 
 
+def checkNamespace(namespace_name):
+    v1_projects = dyn_client.resources.get(api_version='project.openshift.io/v1', kind='Project')
+    projects_list = v1_projects.get()
+    for project in projects_list.items:
+        if namespace_name == project.metadata.name:
+            return True
+    return False
+
+
 k8s_client = config.new_client_from_config()
 dyn_client = DynamicClient(k8s_client)
 
@@ -62,11 +71,16 @@ def tensorflow_deploy():
         s3_model_path = request.form.get('s3_model_path')
         seldon_instance_name = username+"-"+model_name+"-model"
         model_service_name = username + "-" + model_name + "-model-model"
+        
+        namespace_exists = checkNamespace(namespace_name=namespace)
+        if not namespace_exists:
+            return render_template('error.html', Error="The namespace you provided does not exist. Enter a valid namespace.")
+        
         seldon_instance_exists = checkSeldonInstance(seldon_operator_instance_name=seldon_instance_name, namespace=namespace)
-
         if seldon_instance_exists:
             # return jsonify({"Error": "The name provided for the model already exists. Try deploying again with a new name for your model."})
             return render_template('error.html', Error="The name provided for the tensorflow model already exists. Try deploying again with a new name for your model.")
+        
         else:
             sh_cmd="sh tensorflow_deploy.sh "+username+" "+namespace+" "+aws_access_key_id+" "+aws_secret_access_key+" "+s3_bucket_name+" "+model_name+" "+s3_model_path+" "+model_service_name
             os.system(sh_cmd)
@@ -91,10 +105,15 @@ def xgboost_deploy():
         s3_model_path = request.form.get('s3_model_path')
         seldon_instance_name = username + "-" + model_name + "-model"
         model_service_name = username + "-" + model_name + "-model-default"
-        seldon_instance_exists = checkSeldonInstance(seldon_operator_instance_name=seldon_instance_name, namespace=namespace)
+        
+        namespace_exists = checkNamespace(namespace_name=namespace)
+        if not namespace_exists:
+            return render_template('error.html', Error="The namespace you provided does not exist. Enter a valid namespace.")
 
+        seldon_instance_exists = checkSeldonInstance(seldon_operator_instance_name=seldon_instance_name, namespace=namespace)
         if seldon_instance_exists:
             return render_template('error.html', Error="The name provided for the xgboost model already exists. Try deploying again with a new name for your model.")
+        
         else:
             sh_cmd = "sh xgboost_deploy.sh "+username+" "+namespace+" "+aws_access_key_id+" "+aws_secret_access_key+" "+s3_bucket_name+" "+model_name+" "+s3_model_path+" "+model_service_name
             os.system(sh_cmd)
@@ -118,9 +137,15 @@ def sklearn_deploy():
         prediction_method = request.form.get('prediction_method')
         seldon_instance_name = username + "-" + model_name + "-model"
         model_service_name = username + "-" + model_name + "-model-default"
+        
+        namespace_exists = checkNamespace(namespace_name=namespace)
+        if not namespace_exists:
+            return render_template('error.html', Error="The namespace you provided does not exist. Enter a valid namespace.")
+        
         seldon_instance_exists = checkSeldonInstance(seldon_operator_instance_name=seldon_instance_name, namespace=namespace)
         if seldon_instance_exists:
             return render_template('error.html', Error="The name provided for the sklearn model already exists. Try deploying again with a new name for your model.")
+        
         else:
             sh_cmd = "sh sklearn_deploy.sh "+username+" "+namespace+" "+aws_access_key_id+" "+aws_secret_access_key+" "+s3_bucket_name+" "+model_name+" "+s3_model_path+" "+prediction_method+" "+model_service_name
             os.system(sh_cmd)
@@ -143,9 +168,15 @@ def h2o_deploy():
         s3_model_path = request.form.get('s3_model_path')
         model_to_be_saved = username+"-"+model_name+".zip"
         s3_region = ''
+        
+        namespace_exists = checkNamespace(namespace_name=namespace)
+        if not namespace_exists:
+            return render_template('error.html', Error="The namespace you provided does not exist. Enter a valid namespace.")
+
         s3_endpoint_url = 'https://s3-rook-ceph.apps.ai.innerdata.ml'
         if checkDeployment(username+"-"+model_name, namespace)==0:
             return render_template('error.html', Error="The name provided for the h2o model already exists. Try deploying again with a new name for your model.")
+        
         else:
             s3 = boto3.client('s3', s3_region, endpoint_url=s3_endpoint_url, aws_access_key_id = aws_access_key_id, aws_secret_access_key = aws_secret_access_key)
             s3.download_file(s3_bucket_name,s3_model_path, model_to_be_saved)
@@ -156,4 +187,4 @@ def h2o_deploy():
 
 
 if __name__ == '__main__':
-    app.run(use_reloader=True, debug=True)
+    app.run(host="0.0.0.0", port=8080, use_reloader=True, debug=True)
